@@ -1,0 +1,1 @@
+const { data: uploadData, error: uploadError } = await supabase.storage.from('public').upload(fileName, logoFile, { upsert: true });

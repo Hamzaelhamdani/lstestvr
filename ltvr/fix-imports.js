@@ -72,14 +72,14 @@ function fixImportsInFile(filePath) {
   }
 }
 
-// Fix App.tsx imports
+// Fix src/App.tsx imports
 function fixAppImports() {
-  const appPath = path.join(__dirname, 'App.tsx');
+  const appPath = path.join(__dirname, 'src', 'App.tsx');
   if (fs.existsSync(appPath)) {
     let content = fs.readFileSync(appPath, 'utf8');
     content = content.replace(/from\s+["']\.\/components\//g, 'from "./src/components/');
     fs.writeFileSync(appPath, content);
-    console.log('Fixed imports in App.tsx');
+    console.log('Fixed imports in src/App.tsx');
   }
 }
 
@@ -96,7 +96,7 @@ function fixUseResponsive() {
 
 // Main execution
 try {
-  // Fix App.tsx imports
+  // Fix src/App.tsx imports
   fixAppImports();
   
   // Find and fix imports in all TS/TSX files in src/

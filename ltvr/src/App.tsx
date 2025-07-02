@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
+import { RoleSelect } from "./components/auth/RoleSelect";
 import { Layout } from "./components/layout/Layout";
 import { HomePage } from "./components/home/HomePage";
 import { AuthenticationFlow } from "./components/auth/AuthenticationFlow";
@@ -79,7 +80,8 @@ function App() {
     "client-dashboard": "Client Dashboard | VenturesRoom",
     "purchase-history": "Purchase History | VenturesRoom",
     "venture-room-club": "VenturesRoom Club | Exclusive Benefits",
-    "dashboard-overview": "Platform Features | VenturesRoom"
+    "dashboard-overview": "Platform Features | VenturesRoom",
+    "role-select": "Choisissez votre rôle | VenturesRoom"
   };
 
   // SEO route descriptions mapping
@@ -97,6 +99,7 @@ function App() {
     "purchase-history": "Track your purchase history and manage orders on VenturesRoom.",
     "venture-room-club": "Join the exclusive VenturesRoom Club for premium benefits and opportunities.",
     "dashboard-overview": "Explore all features and capabilities of the VenturesRoom platform."
+    ,"role-select": "Sélectionnez le rôle avec lequel vous souhaitez naviguer sur la plateforme."
   };
 
   // Viewport detection helper function (defined before any conditional returns)
@@ -264,26 +267,44 @@ function App() {
   // Authentication handlers
   const handleLogin = (userData?: any) => {
     if (userData) {
+      // Extraction robuste du tableau de rôles depuis les métadonnées
+      let roles = userData.user_metadata?.role || userData.app_metadata?.role || userData.role;
+      if (typeof roles === 'string') roles = [roles];
+      if (!Array.isArray(roles)) roles = [];
+      const fullName = userData.full_name || userData.user_metadata?.full_name || userData.user_metadata?.name;
+      // Par défaut, rôle actif = premier rôle
+      const activeRole = roles[0] || null;
       const enhancedUserData = {
         ...userData,
+        roles,
+        activeRole,
+        full_name: fullName,
         id: userData.id || `user-${Date.now()}`,
         joinDate: userData.joinDate || new Date().toISOString()
       };
-      
       setUser(enhancedUserData);
       sessionStorage.setItem("user", JSON.stringify(enhancedUserData));
-      
-      // Navigate based on user role
-      if (userData.role === "startup") {
-        navigate("startup-dashboard");
-      } else if (userData.role === "Accelerateur/Incubateur") {
-        navigate("support-structure-dashboard");
-      } else if (userData.role === "admin") {
-        navigate("admin-portal");
-      } else if (userData.role === "client") {
-        navigate("client-dashboard");
-      } else {
-        navigate("home");
+      // Si plusieurs rôles, demander à l'utilisateur de choisir
+      if (roles.length > 1) {
+        navigate("role-select");
+        return;
+      }
+      // Navigation selon le rôle actif
+      switch (activeRole) {
+        case "startup":
+          navigate("startup-dashboard");
+          break;
+        case "Accelerateur/Incubateur":
+        case "support":
+          navigate("support-structure-dashboard");
+          break;
+        case "admin":
+          navigate("admin-portal");
+          break;
+        case "client":
+        default:
+          navigate("client-dashboard");
+          break;
       }
     } else {
       navigate("auth");
@@ -301,170 +322,7 @@ function App() {
     navigate('home');
   };
 
-  // Role-based navigation items
-  const getNavItems = () => {
-    // Common nav items for all users
-    const commonItems = [
-      { 
-        route: "home" as AppRoute, 
-        label: "Home", 
-        icon: Icons.HomeIcon, 
-        color: "bg-primary",
-        tooltip: "Return to homepage"
-      },
-      { 
-        route: "marketplace" as AppRoute, 
-        label: "Marketplace", 
-        icon: Icons.ShoppingCartIcon, 
-        color: "bg-secondary",
-        tooltip: "Browse startup products and services"
-      },
-      { 
-        route: "auth" as AppRoute, 
-        label: user ? "Profile" : "Sign In", 
-        icon: Icons.UserIcon, 
-        color: "bg-chart-5",
-        tooltip: user ? "View your profile" : "Sign in or create account"
-      },
-      {
-        route: "venture-room-club" as AppRoute,
-        label: "Club",
-        icon: Icons.TagIcon,
-        color: "bg-chart-3",
-        tooltip: "Explore VentureRoom Club for startup discounts"
-      },
-      // Add the dashboard overview to common items
-      {
-        route: "dashboard-overview" as AppRoute,
-        label: "Features",
-        icon: Icons.LayoutGridIcon,
-        color: "bg-chart-5",
-        tooltip: "Explore all dashboard features"
-      }
-    ];
-
-    // Role-specific nav items
-    if (user?.role === "startup") {
-      return [
-        ...commonItems,
-        { 
-          route: "startup-dashboard" as AppRoute, 
-          label: "Dashboard", 
-          icon: Icons.LayoutDashboardIcon, 
-          color: "bg-tertiary",
-          tooltip: "Manage your startup"
-        },
-        { 
-          route: "startup-storefront" as AppRoute, 
-          label: "Storefront", 
-          icon: Icons.RocketIcon, 
-          color: "bg-tertiary",
-          tooltip: "View your public storefront"
-        },
-        { 
-          route: "community-discounts" as AppRoute, 
-          label: "Community", 
-          icon: Icons.TagsIcon, 
-          color: "bg-chart-3",
-          tooltip: "Manage startup community discounts"
-        },
-        { 
-          route: "payments" as AppRoute, 
-          label: "Payments", 
-          icon: Icons.BanknoteIcon, 
-          color: "bg-chart-4",
-          tooltip: "Manage payments and payouts"
-        }
-      ];
-    } else if (user?.role === "support") {
-      return [
-        ...commonItems,
-        { 
-          route: "support-structure-dashboard" as AppRoute, 
-          label: "Dashboard", 
-          icon: Icons.BuildingIcon, 
-          color: "bg-chart-4",
-          tooltip: "Access support structure dashboard"
-        },
-        { 
-          route: "payments" as AppRoute, 
-          label: "Commissions", 
-          icon: Icons.BanknoteIcon, 
-          color: "bg-chart-4",
-          tooltip: "Track your commission earnings"
-        }
-      ];
-    } else if (user?.role === "admin") {
-      return [
-        ...commonItems,
-        { 
-          route: "admin-portal" as AppRoute, 
-          label: "Admin", 
-          icon: Icons.ShieldCheckIcon, 
-          color: "bg-destructive",
-          tooltip: "Admin portal for platform management"
-        },
-        { 
-          route: "payments" as AppRoute, 
-          label: "Payments", 
-          icon: Icons.BanknoteIcon, 
-          color: "bg-chart-4",
-          tooltip: "Manage platform payments"
-        }
-      ];
-    } else if (user?.role === "client") {
-      return [
-        ...commonItems,
-        { 
-          route: "client-dashboard" as AppRoute, 
-          label: "Dashboard", 
-          icon: Icons.LayoutDashboardIcon, 
-          color: "bg-tertiary",
-          tooltip: "Access your client dashboard"
-        },
-        { 
-          route: "purchase-history" as AppRoute, 
-          label: "Purchases", 
-          icon: Icons.HistoryIcon, 
-          color: "bg-chart-3",
-          tooltip: "View your purchase history"
-        },
-        { 
-          route: "payments" as AppRoute, 
-          label: "Payments", 
-          icon: Icons.BanknoteIcon, 
-          color: "bg-chart-4",
-          tooltip: "Manage your payment methods"
-        },
-        { 
-          route: "startup-storefront" as AppRoute, 
-          label: "Startups", 
-          icon: Icons.RocketIcon, 
-          color: "bg-tertiary",
-          tooltip: "Explore startup storefronts"
-        }
-      ];
-    } else {
-      // Default for logged out users
-      return [
-        ...commonItems,
-        { 
-          route: "startup-storefront" as AppRoute, 
-          label: "Startups", 
-          icon: Icons.RocketIcon, 
-          color: "bg-tertiary",
-          tooltip: "Explore startup storefronts"
-        },
-        { 
-          route: "support-structure-dashboard" as AppRoute, 
-          label: "Support", 
-          icon: Icons.BuildingIcon, 
-          color: "bg-chart-4",
-          tooltip: "Learn about support structures"
-        }
-      ];
-    }
-  };
+  // ...SUPPRIMÉ : getNavItems...
 
   // Helper to determine if the current route is a dashboard route
   const isDashboardRoute = (route: string): boolean => {
@@ -502,6 +360,19 @@ function App() {
               >
                 {currentRoute === "home" && <HomePage />}
                 {currentRoute === "auth" && <AuthenticationFlow onLogin={handleLogin} />}
+                {currentRoute === "role-select" && user && (
+                  <RoleSelect user={user} onSelect={(role) => {
+                    // Met à jour le rôle actif et redirige
+                    const updatedUser = { ...user, activeRole: role };
+                    setUser(updatedUser);
+                    sessionStorage.setItem("user", JSON.stringify(updatedUser));
+                    if (role === "startup") navigate("startup-dashboard");
+                    else if (role === "Accelerateur/Incubateur") navigate("support-structure-dashboard");
+                    else if (role === "admin") navigate("admin-portal");
+                    else if (role === "client") navigate("client-dashboard");
+                    else navigate("home");
+                  }} />
+                )}
                 {currentRoute === "startup-storefront" && (
                   <StartupStorefront 
                     startupId={
@@ -523,7 +394,6 @@ function App() {
                     onSignup={handleSignup}
                   />
                 )}
-                
                 {/* Use DashboardRouter for all dashboard routes */}
                 {isDashboardRoute(currentRoute) && (
                   <DashboardRouter 

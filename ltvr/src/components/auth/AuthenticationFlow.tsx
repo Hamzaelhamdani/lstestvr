@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from '../../services/supabaseClient';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -77,23 +78,28 @@ export function AuthenticationFlow({ onLogin }: AuthenticationFlowProps) {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
-    // Mock login logic
-    setTimeout(() => {
-      setIsLoading(false);
-      if (formData.email && formData.password) {
-        if (onLogin) {
-          onLogin({
-            name: formData.name || "Demo User",
-            email: formData.email,
-            avatar: "",
-            role: selectedRole || "client"
-          });
-        }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
+      });
+      if (error) {
+        setErrorMessage(error.message || "Login failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+      if (data.session && data.user) {
+        localStorage.setItem("token", data.session.access_token);
+        sessionStorage.setItem("user", JSON.stringify(data.user));
+        if (onLogin) onLogin(data.user);
         navigate(from, { replace: true });
       } else {
-        setErrorMessage("Login failed. Please enter email and password.");
+        setErrorMessage("Login failed. No session returned.");
       }
-    }, 1000);
+    } catch (err) {
+      setErrorMessage("Login failed. Please try again.");
+    }
+    setIsLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -105,10 +111,43 @@ export function AuthenticationFlow({ onLogin }: AuthenticationFlowProps) {
     setIsLoading(true);
     setErrorMessage(null);
     setSuccessMessage(null);
-    // Mock signup logic
-    setTimeout(() => {
-      setIsLoading(false);
-      setSuccessMessage("Registration successful! You can now log in.");
+    let logoUrl = undefined;
+    try {
+      // 1. Upload du logo si startup
+      if (selectedRole === "startup" && logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `startup-logos/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        // Utilisation du bucket "venturesroom" au lieu de "public"
+        const { data: uploadData, error: uploadError } = await supabase.storage.from('venturesroom').upload(fileName, logoFile, { upsert: true });
+        if (uploadError) {
+          setErrorMessage("Logo upload failed: " + uploadError.message);
+          setIsLoading(false);
+          return;
+        }
+        const { data: publicUrlData } = supabase.storage.from('venturesroom').getPublicUrl(fileName);
+        logoUrl = publicUrlData.publicUrl;
+      }
+      // 2. Inscription Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name,
+            phone: formData.telephone,
+            country: formData.country,
+            // Multi-rôles : tableau de rôles
+            role: [selectedRole],
+            logo_url: logoUrl
+          }
+        }
+      });
+      if (error) {
+        setErrorMessage(error.message || "Registration failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+      setSuccessMessage("Registration successful! Please check your email to confirm your account, then log in.");
       setActiveTab("signin");
       setFormData(prev => ({
         ...prev,
@@ -118,7 +157,10 @@ export function AuthenticationFlow({ onLogin }: AuthenticationFlowProps) {
         country: ""
       }));
       setLogoFile(null);
-    }, 1000);
+    } catch (err) {
+      setErrorMessage("Registration failed. Please try again.");
+    }
+    setIsLoading(false);
   };
 
   const roles = [

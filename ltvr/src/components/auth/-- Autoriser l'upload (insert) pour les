@@ -1,0 +1,4 @@
+-- Autoriser l'upload (insert) pour les utilisateurs authentifiés
+(
+  auth.role() = 'authenticated'
+)

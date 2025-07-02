@@ -11,4 +11,5 @@ export type AppRoute =
   | "client-dashboard"
   | "purchase-history"
   | "venture-room-club"
-  | "dashboard-overview";
+  | "dashboard-overview"
+  | "role-select";

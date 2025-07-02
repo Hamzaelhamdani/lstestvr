@@ -1,0 +1,74 @@
+  const CATEGORIES = [
+    { name: "SaaS Tools", icon: CodeIcon, description: "Software as a Service applications" },
+    { name: "Web Development", icon: GlobeIcon, description: "Website and web application development" },
+    { name: "Mobile Apps", icon: ShoppingBagIcon, description: "iOS, Android and cross-platform applications" },
+    { name: "Design Services", icon: PenToolIcon, description: "UI/UX, graphic design and branding services" },
+    { name: "Marketing", icon: MegaphoneIcon, description: "Marketing, advertising and promotion services" },
+    { name: "Consulting", icon: BriefcaseIcon, description: "Business, technology and strategic consulting" },
+    { name: "Hardware", icon: BoxIcon, description: "Physical tech products and devices" },
+    { name: "Education", icon: GraduationCapIcon, description: "Courses, tutorials and educational content" },
+    { name: "AI Solutions", icon: BrainIcon, description: "Artificial intelligence and machine learning" },
+    { name: "Fintech", icon: DollarSignIcon, description: "Financial technology products and services" },
+    { name: "Healthcare", icon: HeartPulseIcon, description: "Health tech and medical solutions" },
+    { name: "Other", icon: TagIcon, description: "Other product or service types" }
+  ] as const;
+
+  const productTypes = [
+    {
+      type: 'product' as ProductType,
+      title: 'Physical Product',
+      description: 'Tangible items that require shipping',
+      icon: BoxIcon
+    },
+    {
+      type: 'service' as ProductType,
+      title: 'Service',
+      description: 'Consulting, development, or other services',
+      icon: HeadphonesIcon
+    }
+  ];
+
+  const getCategoryIcon = (categoryName: string) => {
+    const category = CATEGORIES.find(c => c.name === categoryName);
+    return category?.icon || TagIcon;
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setNewProduct(prev => ({ ...prev, categoryId: value }));
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1 && (!newProduct.name || !newProduct.description || !newProduct.type || !newProduct.categoryId)) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    if (currentStep === 2 && !newProduct.price) {
+      toast.error('Please enter a price');
+      return;
+    }
+    if (currentStep === 2) {
+      setCurrentStep(4);
+      return;
+    }
+    setCurrentStep(prev => Math.min(prev + 1, 4));
+  };
+
+  const handlePrevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setNewProduct(prev => ({
+        ...prev,
+        imagePreview: previewUrl
+      }));
+    }
+  };
+
+  const handleCreateProduct = async () => {
+    // ...implémentation réelle...
+  };

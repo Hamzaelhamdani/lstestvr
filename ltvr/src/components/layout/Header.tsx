@@ -45,16 +45,16 @@ export function Header({
 }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Determine which dashboard to navigate to based on user role
-  const dashboardRoute: AppRoute = user?.role === "startup" 
-    ? "startup-dashboard" 
-    : user?.role === "support" 
-      ? "support-structure-dashboard" 
-      : user?.role === "admin"
+  // Détermination du dashboard selon le rôle actif (multi-rôles)
+  const dashboardRoute: AppRoute = user?.activeRole === "startup"
+    ? "startup-dashboard"
+    : user?.activeRole === "support" || user?.activeRole === "Accelerateur/Incubateur"
+      ? "support-structure-dashboard"
+      : user?.activeRole === "admin"
         ? "admin-portal"
         : "client-dashboard";
   
-  const isAuthenticated = !!(user && localStorage.getItem('token'));
+  const isAuthenticated = !!(user && (localStorage.getItem('token') || sessionStorage.getItem('token')));
   
   // Close mobile menu when resizing to desktop
   useEffect(() => {
@@ -124,10 +124,7 @@ export function Header({
             </nav>
           </div>
           
-          {/* Role Switcher */}
-          <div className="hidden md:flex">
-            <RoleSwitcher onRoleSelect={onLogin} />
-          </div>
+          {/* Role Switcher supprimé */}
           
           {/* Pass children (including BackupManager) */}
           {children}
@@ -152,7 +149,7 @@ export function Header({
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="relative">
                         <UserIcon className="h-4 w-4 mr-2" />
-                        {user.name || "Account"}
+                        {user.full_name || user.name || user.email || "Account"}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">

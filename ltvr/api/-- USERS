@@ -1,0 +1,138 @@
+-- USERS
+create table users (
+  id uuid primary key default gen_random_uuid(),
+  email text unique not null,
+  password text not null,
+  full_name text,
+  phone text,
+  country text,
+  role text check (role in ('client', 'startup', 'structure', 'admin')) not null,
+  created_at timestamp with time zone default timezone('utc', now())
+);
+
+-- STRUCTURES
+create table structures (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  logo_url text,
+  structure_type text check (structure_type in ('incubator', 'accelerator', 'fablab')) not null,
+  created_by uuid references users(id),
+  created_at timestamp with time zone default timezone('utc', now())
+);
+
+-- STARTUPS
+create table startups (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  tagline text,
+  description text,
+  logo_url text,
+  banner text,
+  website text,
+  location text,
+  founded text,
+  employees text,
+  funding text,
+  incubator text,
+  created_by uuid references users(id),
+  created_at timestamp with time zone default timezone('utc', now())
+);
+
+-- CATEGORIES
+create table categories (
+  id uuid primary key default gen_random_uuid(),
+  name text unique not null
+);
+
+-- STARTUP <-> CATEGORIES (many-to-many)
+create table startup_categories (
+  startup_id uuid references startups(id) on delete cascade,
+  category_id uuid references categories(id) on delete cascade,
+  primary key (startup_id, category_id)
+);
+
+-- TEAM MEMBERS
+create table team_members (
+  id uuid primary key default gen_random_uuid(),
+  startup_id uuid references startups(id) on delete cascade,
+  name text,
+  role text,
+  image text,
+  bio text
+);
+
+-- SOCIAL LINKS
+create table startup_socials (
+  id uuid primary key default gen_random_uuid(),
+  startup_id uuid references startups(id) on delete cascade,
+  name text,
+  url text
+);
+
+-- PRODUCTS
+create table products (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  price numeric not null,
+  image_url text,
+  category text,
+  badge text,
+  rating numeric default 0,
+  reviews integer default 0,
+  startup_id uuid references startups(id) on delete cascade,
+  created_at timestamp with time zone default timezone('utc', now())
+);
+
+-- COMMISSIONS
+create table commissions (
+  id uuid primary key default gen_random_uuid(),
+  startup_id uuid references startups(id) on delete cascade,
+  structure_id uuid references structures(id) on delete cascade,
+  percentage numeric default 2.5
+);
+
+-- SUPPORT LINKS
+create table support_links (
+  id uuid primary key default gen_random_uuid(),
+  startup_id uuid references startups(id) on delete cascade,
+  url text,
+  label text
+);
+
+-- VIP CLUB
+create table vip_club (
+  id uuid primary key default gen_random_uuid(),
+  name text,
+  benefits_description text,
+  discount_percentage numeric
+);
+
+-- VIP CLUB - STARTUPS (many-to-many)
+create table vip_club_startups (
+  vip_club_id uuid references vip_club(id) on delete cascade,
+  startup_id uuid references startups(id) on delete cascade,
+  primary key (vip_club_id, startup_id)
+);
+
+-- ORDERS
+create table orders (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid references users(id) on delete set null,
+  product_id uuid references products(id) on delete set null,
+  quantity integer default 1,
+  total_price numeric,
+  status text default 'pending',
+  created_at timestamp with time zone default timezone('utc', now())
+);
+
+-- REVIEWS
+create table reviews (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid references products(id) on delete cascade,
+  user_id uuid references users(id) on delete set null,
+  rating integer,
+  comment text,
+  created_at timestamp with time zone default timezone('utc', now())
+);

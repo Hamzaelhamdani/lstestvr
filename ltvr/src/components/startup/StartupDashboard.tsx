@@ -303,15 +303,6 @@ export function StartupDashboard({ user, navigate }: StartupDashboardProps) {
                 <CardTitle>Products & Services</CardTitle>
                 <CardDescription>Manage your offerings</CardDescription>
               </div>
-              <Button
-                className="mt-2 sm:mt-0 bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={() => {
-                  // Reference will be handled by the ProductServiceCreation component
-                }}
-              >
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add New Product
-              </Button>
             </CardHeader>
             <CardContent>
               <div className="py-6">
