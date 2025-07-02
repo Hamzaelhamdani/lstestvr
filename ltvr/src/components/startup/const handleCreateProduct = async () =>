@@ -1,0 +1,40 @@
+const handleCreateProduct = async () => {
+  try {
+    setIsLoading(true);
+    setError(null);
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) throw new Error('Utilisateur non authentifié');
+    // Récupérer la startup liée à l'utilisateur
+    const { data: startupData, error: startupError } = await supabase
+      .from('startups')
+      .select('id')
+      .eq('created_by', user.id)
+      .single();
+    if (startupError || !startupData) throw new Error('Aucune startup trouvée pour cet utilisateur');
+    const startup_id = startupData.id;
+    if (!newProduct.name || !newProduct.price) {
+      toast.error('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+    const { data, error } = await supabase
+      .from('products')
+      .insert([{
+        name: newProduct.name,
+        description: newProduct.description,
+        price: newProduct.price,
+        image_url: newProduct.imagePreview || null,
+        category: newProduct.categoryId || null,
+        startup_id,
+      }]);
+    if (error) throw error;
+    toast.success('Produit créé avec succès', { style: { background: '#22c55e', color: 'white', fontWeight: 'bold', fontSize: '1.1em' }, duration: 3500 });
+    handleCloseDialog();
+    fetchUserProducts();
+    if (onProductCreated && data && data[0]) onProductCreated(data[0]);
+  } catch (error) {
+    setError(error instanceof Error ? error.message : 'Erreur lors de la création du produit');
+    toast.error(error instanceof Error ? error.message : 'Erreur lors de la création du produit', { style: { background: '#ef4444', color: 'white', fontWeight: 'bold', fontSize: '1.1em' }, duration: 4000 });
+  } finally {
+    setIsLoading(false);
+  }
+};

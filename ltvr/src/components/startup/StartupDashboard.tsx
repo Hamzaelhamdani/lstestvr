@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -26,6 +26,7 @@ import {
   BuildingIcon
 } from "lucide-react";
 import { Badge } from "../ui/badge";
+import { supabase } from "../../services/supabaseClient";
 
 interface NotificationsPanelProps {
   userId: string;
@@ -43,6 +44,44 @@ type StartupDashboardProps = {
 
 export function StartupDashboard({ user, navigate }: StartupDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [startupName, setStartupName] = useState<string>("");
+  const [productsCount, setProductsCount] = useState<number>(0);
+  const [ordersCount, setOrdersCount] = useState<number>(0);
+  const [revenue, setRevenue] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!user?.id) return;
+      // Récupérer la startup liée à l'utilisateur
+      const { data: startupData } = await supabase
+        .from('startups')
+        .select('id, name')
+        .eq('created_by', user.id)
+        .single();
+      if (!startupData) return;
+      setStartupName(startupData.name);
+      // Nombre de produits
+      const { count: productsCount } = await supabase
+        .from('products')
+        .select('id', { count: 'exact', head: true })
+        .eq('startup_id', startupData.id);
+      setProductsCount(productsCount || 0);
+      // Nombre de commandes
+      const { count: ordersCount } = await supabase
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('startup_id', startupData.id);
+      setOrdersCount(ordersCount || 0);
+      // Chiffre d'affaires (somme des prix des produits vendus)
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('amount')
+        .eq('startup_id', startupData.id);
+      const totalRevenue = ordersData?.reduce((sum, o) => sum + (o.amount || 0), 0) || 0;
+      setRevenue(totalRevenue);
+    };
+    fetchDashboardData();
+  }, [user]);
   
   // Placeholder data for dashboard
   const dashboardData = {
@@ -79,7 +118,7 @@ export function StartupDashboard({ user, navigate }: StartupDashboardProps) {
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">{user?.name || "Startup Dashboard"}</h1>
+          <h1 className="text-3xl font-bold">{startupName || "Startup Dashboard"}</h1>
           <p className="text-muted-foreground mt-1">
             Manage your products, orders and customers
           </p>
@@ -104,7 +143,6 @@ export function StartupDashboard({ user, navigate }: StartupDashboardProps) {
           </Button>
         </div>
       </div>
-      
       {/* Dashboard Tabs */}
       <Tabs 
         defaultValue="overview" 
@@ -162,11 +200,7 @@ export function StartupDashboard({ user, navigate }: StartupDashboardProps) {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm text-muted-foreground">Total Revenue</p>
-                    <h3 className="text-2xl font-bold mt-1">{dashboardData.revenue.total}</h3>
-                  </div>
-                  <div className={`flex items-center gap-1 text-xs ${dashboardData.revenue.trend === 'up' ? 'text-success' : 'text-destructive'}`}>
-                    <ArrowUpIcon className="h-3 w-3" />
-                    <span>{dashboardData.revenue.change}</span>
+                    <h3 className="text-2xl font-bold mt-1">{revenue} €</h3>
                   </div>
                 </div>
               </CardContent>
@@ -178,27 +212,19 @@ export function StartupDashboard({ user, navigate }: StartupDashboardProps) {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm text-muted-foreground">Total Orders</p>
-                    <h3 className="text-2xl font-bold mt-1">{dashboardData.orders.total}</h3>
-                  </div>
-                  <div className={`flex items-center gap-1 text-xs ${dashboardData.orders.trend === 'up' ? 'text-success' : 'text-destructive'}`}>
-                    <ArrowUpIcon className="h-3 w-3" />
-                    <span>{dashboardData.orders.change}</span>
+                    <h3 className="text-2xl font-bold mt-1">{ordersCount}</h3>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            {/* Customers Card */}
+            {/* Customers Card (à adapter si table customers) */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm text-muted-foreground">Total Customers</p>
-                    <h3 className="text-2xl font-bold mt-1">{dashboardData.customers.total}</h3>
-                  </div>
-                  <div className={`flex items-center gap-1 text-xs ${dashboardData.customers.trend === 'up' ? 'text-success' : 'text-destructive'}`}>
-                    <ArrowUpIcon className="h-3 w-3" />
-                    <span>{dashboardData.customers.change}</span>
+                    <h3 className="text-2xl font-bold mt-1">-</h3>
                   </div>
                 </div>
               </CardContent>
@@ -210,11 +236,8 @@ export function StartupDashboard({ user, navigate }: StartupDashboardProps) {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm text-muted-foreground">Active Products</p>
-                    <h3 className="text-2xl font-bold mt-1">{dashboardData.products.active}</h3>
+                    <h3 className="text-2xl font-bold mt-1">{productsCount}</h3>
                   </div>
-                  <Badge className="bg-primary text-primary-foreground">
-                    {dashboardData.products.total} Total
-                  </Badge>
                 </div>
               </CardContent>
             </Card>

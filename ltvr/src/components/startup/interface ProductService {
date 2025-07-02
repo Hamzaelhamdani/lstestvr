@@ -1,0 +1,13 @@
+interface ProductService {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url?: string;
+  category?: string;
+  badge?: string;
+  rating?: number;
+  reviews?: number;
+  startup_id?: string;
+  created_at?: string;
+}

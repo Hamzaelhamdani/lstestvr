@@ -121,19 +121,17 @@ interface ProductFormState {
 }
 
 interface ProductService {
-  id: string | number;
+  id: string;
   name: string;
   description: string;
-  type: ProductType;
   price: number;
-  categoryId: string;
-  sellerId: string;
-  images: string[];
-  createdByUserId: string;
-  originalPrice?: number;
-  discountedPrice?: number;
+  image_url?: string;
   category?: string;
-  createdAt?: string;
+  badge?: string;
+  rating?: number;
+  reviews?: number;
+  startup_id?: string;
+  created_at?: string;
 }
 export function ProductServiceCreation({
   limit,
@@ -181,10 +179,17 @@ export function ProductServiceCreation({
     try {
       setIsLoading(true);
       setError(null);
-      // Récupérer l'utilisateur connecté via Supabase
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('Utilisateur non authentifié');
-      if (!newProduct.name || !newProduct.description || !newProduct.type || !newProduct.price) {
+      // Récupérer la startup liée à l'utilisateur
+      const { data: startupData, error: startupError } = await supabase
+        .from('startups')
+        .select('id')
+        .eq('created_by', user.id)
+        .single();
+      if (startupError || !startupData) throw new Error('Aucune startup trouvée pour cet utilisateur');
+      const startup_id = startupData.id;
+      if (!newProduct.name || !newProduct.price) {
         toast.error('Veuillez remplir tous les champs obligatoires');
         return;
       }
@@ -194,12 +199,10 @@ export function ProductServiceCreation({
           {
             name: newProduct.name,
             description: newProduct.description,
-            type: newProduct.type,
             price: newProduct.price,
-            categoryId: newProduct.categoryId,
-            sellerId: user.id,
-            created_by: user.id,
-            // TODO: gestion image si besoin
+            image_url: newProduct.imagePreview || null,
+            category: newProduct.categoryId || null,
+            startup_id,
           }
         ]);
       if (error) throw error;
@@ -410,13 +413,15 @@ export function ProductServiceCreation({
           <Card key={product.id} className="overflow-hidden">
             <div className="relative h-48 w-full">
               <ImageWithFallback
-                src={`http://localhost:5139${product.images[0] || ""}`}
+                src={product.image_url || "/default-product.png"}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
-              <Badge className="absolute top-2 right-2 bg-primary text-white">
-                {product.type === 'product' ? 'Product' : 'Service'}
-              </Badge>
+              {product.badge && (
+                <Badge className="absolute top-2 right-2 bg-primary text-white">
+                  {product.badge}
+                </Badge>
+              )}
             </div>
             <CardHeader>
               <CardTitle>{product.name}</CardTitle>
@@ -424,13 +429,14 @@ export function ProductServiceCreation({
             </CardHeader>
             <CardContent>
               <p className="text-xl font-bold">
-                ${product.discountedPrice}
-                {product.originalPrice !== product.discountedPrice && (
-                  <span className="ml-2 text-sm line-through text-muted-foreground">
-                    ${product.originalPrice}
-                  </span>
+                {product.price ? `${product.price} €` : ''}
+                {product.rating && (
+                  <span className="ml-2 text-sm text-yellow-500">★ {product.rating}</span>
                 )}
               </p>
+              {product.category && (
+                <span className="text-xs text-muted-foreground">Catégorie : {product.category}</span>
+              )}
             </CardContent>
           </Card>
         ))}
