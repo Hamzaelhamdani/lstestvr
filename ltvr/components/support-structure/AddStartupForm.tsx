@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { PlusIcon } from "lucide-react@0.487.0";
+import { PlusIcon } from "lucide-react";
 
 interface AddStartupFormProps {
   onClose: (addedStartup?: any) => void;

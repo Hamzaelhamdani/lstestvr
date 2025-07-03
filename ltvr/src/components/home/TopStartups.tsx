@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ChevronRight, ChevronLeft, Award, Users, TrendingUp } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { supabase } from '../../services/supabaseClient';
 
 // Interface for API startup data
 interface ApiStartup {
@@ -35,7 +36,7 @@ interface UIStartup {
   };
 }
 
-const API_BASE_URL = 'http://localhost:5139';
+
 
 export function TopStartups() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -46,66 +47,49 @@ export function TopStartups() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch startups from API
+  // Fetch startups from Supabase
   useEffect(() => {
     const fetchStartups = async () => {
       try {
         setIsLoading(true);
-        console.log('Fetching startups...');
-        
-        const response = await fetch(`${API_BASE_URL}/api/Admin/all-startups`);
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const apiStartups: ApiStartup[] = await response.json();
-        console.log('Fetched startups:', apiStartups);
-
-        if (!Array.isArray(apiStartups) || apiStartups.length === 0) {
+        const { data: apiStartups, error } = await supabase
+          .from('startups')
+          .select('*')
+          .eq('isApproved', true);
+        if (error) throw error;
+        if (!apiStartups || !Array.isArray(apiStartups) || apiStartups.length === 0) {
           throw new Error('No startups data received');
         }
-
-        // Transform API data to match UI requirements with better defaults
-        const transformedStartups: UIStartup[] = apiStartups
-          .filter(startup => startup.isApproved) // Only show approved startups
-          .map((startup, index) => ({
-            id: startup.id,
-            name: startup.displayName || 'Unnamed Startup',
-            category: startup.role || 'Technology',
-            description: `${startup.displayName} is a ${startup.role} startup based in ${startup.country}`,
-            image: "https://images.unsplash.com/photo-1581092921461-7d65ca45393a?q=80&w=2070&auto=format&fit=crop",
-            logo: startup.logoPath 
-              ? `${API_BASE_URL}${startup.logoPath}` 
-              : "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?q=80&w=2069&auto=format&fit=crop",
-            rating: 4.5 + (Math.random() * 0.5),
-            reviewCount: Math.floor(Math.random() * 100) + 50,
-            tags: [
-              startup.role || 'Tech',
-              startup.country || 'Global',
-              'Startup'
-            ].filter(Boolean),
-            bgColor: `rgba(193, 241, 126, ${0.1 + (index * 0.1)})`,
-            metrics: {
-              funding: `$${(Math.random() * 5 + 1).toFixed(1)}M`,
-              customers: Math.floor(Math.random() * 1000) + 100,
-              growth: `${Math.floor(Math.random() * 200) + 50}%`
-            }
-          }));
-
-        console.log('Transformed startups:', transformedStartups);
+        const transformedStartups: UIStartup[] = apiStartups.map((startup: any, index: number) => ({
+          id: startup.id,
+          name: startup.displayName || 'Unnamed Startup',
+          category: startup.role || 'Technology',
+          description: `${startup.displayName ?? 'Startup'} is a ${startup.role ?? 'Tech'} startup based in ${startup.country ?? 'Global'}`,
+          image: "https://images.unsplash.com/photo-1581092921461-7d65ca45393a?q=80&w=2070&auto=format&fit=crop",
+          logo: startup.logoPath || "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?q=80&w=2069&auto=format&fit=crop",
+          rating: 4.5 + (Math.random() * 0.5),
+          reviewCount: Math.floor(Math.random() * 100) + 50,
+          tags: [
+            startup.role || 'Tech',
+            startup.country || 'Global',
+            'Startup'
+          ].filter(Boolean),
+          bgColor: `rgba(193, 241, 126, ${0.1 + (index * 0.1)})`,
+          metrics: {
+            funding: `$${(Math.random() * 5 + 1).toFixed(1)}M`,
+            customers: Math.floor(Math.random() * 1000) + 100,
+            growth: `${Math.floor(Math.random() * 200) + 50}%`
+          }
+        }));
         setStartups(transformedStartups);
         setError(null);
       } catch (err) {
         console.error('Error fetching startups:', err);
         setError(err instanceof Error ? err.message : 'Failed to load startups');
-        // Don't clear existing startups on error if you want to keep showing them
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchStartups();
   }, []);
 

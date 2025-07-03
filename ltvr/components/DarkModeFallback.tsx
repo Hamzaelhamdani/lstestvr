@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { CheckCircleIcon, MoonIcon, SunIcon } from "lucide-react@0.487.0";
+import { CheckCircleIcon, MoonIcon, SunIcon } from "lucide-react";
 
 interface DarkModeFallbackProps {
   onContinue: () => void;

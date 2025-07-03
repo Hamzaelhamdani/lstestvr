@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "../ui/button";
-import { ArrowRightIcon, RocketIcon, CalendarIcon } from "lucide-react@0.487.0";
+import { ArrowRightIcon, RocketIcon, CalendarIcon } from "lucide-react";
 
 // Animation variants
 const fadeIn = {

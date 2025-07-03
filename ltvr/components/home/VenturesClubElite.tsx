@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { CheckIcon, StarIcon, ChevronRightIcon, AwardIcon, BadgeCheckIcon } from "lucide-react@0.487.0";
+import { CheckIcon, StarIcon, ChevronRightIcon, AwardIcon, BadgeCheckIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 

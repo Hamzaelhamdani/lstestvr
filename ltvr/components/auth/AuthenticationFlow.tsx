@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { UserIcon, Building2Icon, User2Icon, RocketIcon } from "lucide-react@0.487.0";
+import { UserIcon, Building2Icon, User2Icon, RocketIcon } from "lucide-react";
 
 interface AuthenticationFlowProps {
   onLogin?: (userData?: any) => void;

@@ -1,4 +1,4 @@
-import { MoonIcon } from "lucide-react@0.487.0";
+import { MoonIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Tooltip,

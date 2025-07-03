@@ -50,7 +50,7 @@ import {
   ShoppingCartIcon,
   InfoIcon,
   BanknoteIcon
-} from "lucide-react@0.487.0";
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
@@ -77,7 +77,7 @@ import { CommissionManagement } from "./CommissionManagement";
 import { SettingsDialog } from "./SettingsDialog";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { Separator } from "../ui/separator";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { Route } from "../layout/NavigationBar";
 
 // Sample data for the admin dashboard

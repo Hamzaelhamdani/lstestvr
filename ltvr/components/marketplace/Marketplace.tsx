@@ -18,7 +18,7 @@ import {
   Columns,
   SortAsc,
   SortDesc
-} from "lucide-react@0.487.0";
+} from "lucide-react";
 
 // Sample product categories
 const categories = [

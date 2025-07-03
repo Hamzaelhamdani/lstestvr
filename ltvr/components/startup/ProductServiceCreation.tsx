@@ -69,8 +69,8 @@ import {
   GraduationCapIcon,
   HeartPulseIcon,
   DollarSignIcon
-} from "lucide-react@0.487.0";
-import { toast } from "sonner@2.0.3";
+} from "lucide-react";
+import { toast } from "sonner";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 
 // Types for product creation

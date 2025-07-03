@@ -11,7 +11,7 @@ import {
   StarIcon,
   ShieldIcon,
   ZapIcon
-} from "lucide-react@0.487.0";
+} from "lucide-react";
 import { Button } from "../ui/button";
 
 // Enhanced step data with supporting info for mini-cards

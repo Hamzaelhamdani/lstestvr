@@ -16,7 +16,7 @@ import {
   DownloadIcon,
   ArrowRightIcon,
   AlertCircleIcon
-} from "lucide-react@0.487.0";
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";

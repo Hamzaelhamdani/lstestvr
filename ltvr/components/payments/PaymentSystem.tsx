@@ -33,7 +33,7 @@ import {
   AlertCircleIcon,
   LineChartIcon,
   PieChartIcon
-} from "lucide-react@0.487.0";
+} from "lucide-react";
 import { Badge } from "../ui/badge";
 
 // Interfaces

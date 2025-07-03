@@ -22,7 +22,7 @@ import {
   ClipboardCopyIcon,
   CheckSquareIcon,
   ChevronRightIcon
-} from "lucide-react@0.487.0";
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
@@ -46,7 +46,7 @@ import {
   HoverCardContent,
   HoverCardTrigger
 } from "../ui/hover-card";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { copyToClipboard } from "../utils/clipboard";
 

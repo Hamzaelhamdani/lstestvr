@@ -5,9 +5,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
-import { CheckIcon, XIcon, ChevronRightIcon, ThumbsUpIcon, ThumbsDownIcon } from "lucide-react@0.487.0";
+import { CheckIcon, XIcon, ChevronRightIcon, ThumbsUpIcon, ThumbsDownIcon } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 interface SupportStructure {
   id: string;

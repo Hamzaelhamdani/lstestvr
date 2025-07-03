@@ -23,6 +23,7 @@ import { VenturesClubElite } from "./VenturesClubElite";
 import { TransformCTA } from "./TransformCTA";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { BestProducts } from "./BestProducts";
+import { supabase } from '../../services/supabaseClient';
 
 // Animation variants
 const fadeIn = {
@@ -122,7 +123,7 @@ interface IncubatorWithStartups {
   startupsCount: number;
 }
 
-const API_BASE_URL = 'http://localhost:5139';
+
 
 export function HomePage() {
   // States for each carousel
@@ -174,36 +175,29 @@ export function HomePage() {
     };
   }, [activeTab, currentStartupSlide, currentSupportSlide]);
 
-  // Fetch startups effect
+  // Fetch startups from Supabase
   useEffect(() => {
     const fetchStartups = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`${API_BASE_URL}/api/Admin/all-startups`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch startups');
-        }
-
-        const apiStartups: ApiStartup[] = await response.json();
-
-        // Transform API data to match UI requirements
-        const transformedStartups: UIStartup[] = apiStartups
-          .filter(startup => startup.isApproved)
-          .map(startup => ({
-            id: startup.id.toString(),
-            name: startup.displayName,
-            logo: startup.logoPath 
-              ? `${API_BASE_URL}${startup.logoPath}`
-              : "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?q=80&w=2069&auto=format&fit=crop",
-            category: startup.role,
-            description: `${startup.displayName} is a ${startup.role} startup based in ${startup.country}`,
-            tags: [startup.role, startup.country, 'Startup'],
-            rating: 4.5 + (Math.random() * 0.5), // Random rating between 4.5 and 5
-            reviews: Math.floor(Math.random() * 100) + 50, // Random reviews between 50 and 150
-            featured: true
-          }));
-
+        // Utilisation Supabase
+        const { data: apiStartups, error } = await supabase
+          .from('startups')
+          .select('*')
+          .eq('isApproved', true);
+        if (error) throw error;
+        if (!apiStartups) throw new Error('No startups data received');
+        const transformedStartups: UIStartup[] = apiStartups.map((startup: any) => ({
+          id: startup.id?.toString() ?? '',
+          name: startup.displayName ?? 'Unnamed Startup',
+          logo: startup.logoPath || "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?q=80&w=2069&auto=format&fit=crop",
+          category: startup.role ?? 'Technology',
+          description: `${startup.displayName ?? 'Startup'} is a ${startup.role ?? 'Tech'} startup based in ${startup.country ?? 'Global'}`,
+          tags: [startup.role, startup.country, 'Startup'].filter(Boolean),
+          rating: 4.5 + (Math.random() * 0.5),
+          reviews: Math.floor(Math.random() * 100) + 50,
+          featured: true
+        }));
         setStartups(transformedStartups);
         setError(null);
       } catch (err) {
@@ -213,23 +207,27 @@ export function HomePage() {
         setIsLoading(false);
       }
     };
-
     fetchStartups();
   }, []);
 
-  // Fetch incubators effect
+  // Fetch incubators/support structures from Supabase
   useEffect(() => {
     const fetchIncubators = async () => {
       try {
         setIsIncubatorsLoading(true);
-        const response = await fetch(`${API_BASE_URL}/api/Accelerator/incubators-with-startups`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch incubators');
-        }
-
-        const data = await response.json();
-        setIncubators(data);
+        // On suppose que la table "incubators" existe et a une relation startups
+        const { data, error } = await supabase
+          .from('incubators')
+          .select('*, startups(*)');
+        if (error) throw error;
+        if (!data) throw new Error('No incubators data received');
+        // Adapter le mapping si besoin
+        const incubatorsWithStartups: IncubatorWithStartups[] = (data as any[]).map((inc: any) => ({
+          incubatorInfo: inc,
+          startups: inc.startups || [],
+          startupsCount: inc.startups ? inc.startups.length : 0
+        }));
+        setIncubators(incubatorsWithStartups);
         setIncubatorsError(null);
       } catch (err) {
         console.error('Error fetching incubators:', err);
@@ -238,7 +236,6 @@ export function HomePage() {
         setIsIncubatorsLoading(false);
       }
     };
-
     fetchIncubators();
   }, []);
 
@@ -672,9 +669,7 @@ export function HomePage() {
                           >
                             <div className="relative">
                               <ImageWithFallback
-                                src={item.incubatorInfo.logoPath 
-                                  ? `${API_BASE_URL}${item.incubatorInfo.logoPath}`
-                                  : "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=800&q=80"}
+                                src={item.incubatorInfo.logoPath || 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=800&q=80'}
                                 alt={item.incubatorInfo.displayName}
                                 className="w-full h-48 object-cover"
                                 width={400}

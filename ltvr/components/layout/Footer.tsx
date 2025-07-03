@@ -1,7 +1,7 @@
 import { Logo } from "./Logo";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
-import { GithubIcon, TwitterIcon, LinkedinIcon, YoutubeIcon } from "lucide-react@0.487.0";
+import { GithubIcon, TwitterIcon, LinkedinIcon, YoutubeIcon } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();

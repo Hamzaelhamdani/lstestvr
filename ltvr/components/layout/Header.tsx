@@ -14,7 +14,7 @@ import {
   BriefcaseIcon,
   BuildingIcon,
   ShieldIcon
-} from "lucide-react@0.487.0";
+} from "lucide-react";
 import { 
   DropdownMenu,
   DropdownMenuContent,
