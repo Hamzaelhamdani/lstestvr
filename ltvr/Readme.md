@@ -1,145 +1,119 @@
-# Project Title (Replace with your project name)
+# VenturesRoom
 
-## Description
+VenturesRoom est une plateforme en ligne qui connecte startups, clients, structures d’accompagnement (incubateurs, accélérateurs, fablabs) et administrateurs. Elle permet aux startups de présenter, promouvoir et vendre leurs produits ou services innovants, tout en offrant un modèle unique de partage de commissions.
 
-(Add a brief description of your project here: What it does, its purpose, etc.)
+## 🧠 Description
 
-## Technologies Used
+- **Startups** : Créent un profil, ajoutent des produits/services, accèdent à des dashboards et reçoivent du support.
+- **Clients** : Parcourent et achètent des produits/services.
+- **Structures** : Soutiennent les startups et reçoivent une part des commissions sur les ventes.
+- **Admins** : Gèrent l’ensemble de la plateforme.
 
-*   .NET (Specify version, e.g., .NET 6, .NET 7)
-*   ASP.NET Core (If applicable, specify version)
-*   Entity Framework Core (Specify version)
-*   PostgreSQL
-*   (Any other frameworks, libraries, or tools used)
+## 💸 Modèle de commission
 
-## Prerequisites
+- 5% de commission sur chaque vente.
+- Si une structure accompagne la startup, 2,5% pour la plateforme et 2,5% pour la/les structure(s).
+- Si plusieurs structures, la part structure est répartie équitablement.
+- Si aucune structure, la plateforme garde 5%.
 
-Before you begin, ensure you have met the following requirements:
+## 🗄️ Schéma de base de données
 
-*   [.NET SDK](https://dotnet.microsoft.com/download) (Specify version compatible with your project)
-*   [PostgreSQL](https://www.postgresql.org/download/) installed and running.
-*   [Git](https://git-scm.com/downloads) (Optional, for cloning the repository)
-*   An IDE or code editor (e.g., Visual Studio, VS Code, Rider)
+- **users** : id, email, password, full_name, phone, country, role, created_at
+- **startups** : id, name, description, logo_url, website, created_by, created_at
+- **products** : id, name, description, price, image_url, startup_id, created_at
+- **structures** : id, name, description, logo_url, structure_type, created_by, created_at
+- **commissions** : id, startup_id, structure_id, percentage
+- **support_links** : id, startup_id, url, label
+- **vip_club** : id, name, benefits_description, discount_percentage, startup_ids
 
-## Getting Started
+## 🔐 Sécurité & Accès
 
-Follow these steps to get your project up and running:
+- Authentification Supabase avec gestion des rôles (`client`, `startup`, `structure`, `admin`)
+- RLS (Row Level Security) sur toutes les tables sensibles
+- Dashboards dynamiques selon le rôle
 
-1.  **Clone the repository (if applicable):**
-    ```bash
-    git clone <your-repository-url>
-    cd <project-directory>
-    ```
+## 📦 Fonctionnalités
 
-2.  **Configure Database Connection:**
-    *   Open `appsettings.json` (or `appsettings.Development.json`).
-    *   Locate the `ConnectionStrings` section.
-    *   Update the connection string for PostgreSQL. It should look something like this:
-        ```json
-        "ConnectionStrings": {
-          "DefaultConnection": "Host=localhost;Port=5432;Database=your_database_name;Username=your_username;Password=your_password;"
-        }
-        ```
-    *   Ensure you have created the database `your_database_name` in PostgreSQL.
+- Multilingue (Français, Anglais, Arabe, Darija)
+- Upload d’images via Supabase Storage
+- Dashboards avancés (ventes, commissions, activité)
+- Programmes VIP et gestion des remises
+- Intégration paiement (Stripe/Flutterwave, optionnel)
+- API RESTful sécurisée
 
-3.  **Install Dependencies:**
-    The .NET CLI will typically restore packages automatically when building or running. If you need to do it manually:
-    ```bash
-    dotnet restore
-    ```
+## 🚀 Installation
 
-## Database Migrations (Entity Framework Core)
+1. **Cloner le repo**
+   ```bash
+   git clone <repo-url>
+   cd lstestvr
+   ```
 
-This project uses Entity Framework Core for database migrations.
+2. **Configurer les variables d’environnement**
+   ```
+   cp ltvr/.env.example ltvr/.env
+   # puis éditer ltvr/.env avec vos clés Supabase
+   ```
 
-1.  **Install EF Core Tools:**
-    If you haven't already, install the EF Core command-line tools. You can install it as a global tool or a local tool.
+3. **Installer les dépendances**
+   ```bash
+   cd ltvr
+   npm install
+   ```
 
-    *   As a global tool (run once):
-        ```bash
-        dotnet tool install --global dotnet-ef
-        ```
-    *   As a local tool (per project, create a tool manifest if you don't have one):
-        ```bash
-        dotnet new tool-manifest # if you don't have one
-        dotnet tool install dotnet-ef
-        ```
+4. **Lancer le projet**
+   ```bash
+   npm run dev
+   ```
 
-2.  **Creating a New Migration:**
-    Whenever you make changes to your model classes (entities), you'll need to create a new migration.
+## 🛠️ Scripts utiles
 
-    Navigate to the directory containing your `DbContext` and project file (`.csproj`) and run:
-    ```bash
-    # If using global tool
-    dotnet ef migrations add YourMigrationName
+- `npm run dev` : Lancer le serveur de développement
+- `npm run build` : Build de production
 
-    # If using local tool
-    dotnet tool run dotnet-ef migrations add YourMigrationName
-    ```
-    Replace `YourMigrationName` with a descriptive name for your migration (e.g., `AddUserTable`, `UpdateProductSchema`).
+## 📂 Arborescence du projet
 
-3.  **Applying Migrations to the Database:**
-    After creating a migration, apply it to your database:
-    ```bash
-    # If using global tool
-    dotnet ef database update
+```
+ltvr/
+├── public/
+├── src/
+│   ├── assets/
+│   ├── components/
+│   │   ├── common/
+│   │   ├── dashboard/
+│   │   ├── startup/
+│   │   ├── client/
+│   │   ├── structure/
+│   │   └── admin/
+│   ├── pages/
+│   ├── services/
+│   ├── hooks/
+│   ├── utils/
+│   └── App.tsx
+├── .env
+├── package.json
+├── tsconfig.json
+└── Readme.md
+```
 
-    # If using local tool
-    dotnet tool run dotnet-ef database update
-    ```
-    This will create or update your database schema based on the migrations.
+## 📊 Dashboards
 
-4.  **Reverting a Migration (if needed):**
-    To revert the last applied migration:
-    ```bash
-    # If using global tool
-    dotnet ef database update <PreviousMigrationName>
+- **Startup** : ventes, produits, commissions, stockage utilisé
+- **Structure** : startups accompagnées, commissions, activité
+- **Admin** : utilisateurs, revenus, top startups
+- **Client** : historique commandes, remises VIP
 
-    # If using local tool
-    dotnet tool run dotnet-ef database update <PreviousMigrationName>
-    ```
-    To revert all migrations, you can use `dotnet ef database update 0`.
+## 🤝 Contribuer
 
-## Running the Project
+1. Fork le repo
+2. Crée une branche (`git checkout -b feature/ma-feature`)
+3. Commit tes changements (`git commit -am 'feat: nouvelle fonctionnalité'`)
+4. Push la branche (`git push origin feature/ma-feature`)
+5. Ouvre une Pull Request
 
-1.  **Using the .NET CLI:**
-    Navigate to your project's root directory (where the `.csproj` file is) and run:
-    ```bash
-    dotnet run
-    ```
-    If your solution has multiple runnable projects, you might need to specify the project:
-    ```bash
-    dotnet run --project path/to/your/project.csproj
-    ```
+## 📄 Licence
 
-2.  **Using an IDE (Visual Studio, Rider, VS Code):**
-    *   Open the project/solution in your IDE.
-    *   Click the "Run" or "Debug" button.
-
-By default, the application will likely be accessible at `http://localhost:5000` or `https://localhost:5001` (or other ports specified in `launchSettings.json`).
-
-## API Endpoints (If applicable)
-
-(Describe the main API endpoints if your project is an API. Include example requests and responses if possible.)
-
-*   **GET /api/resource**: Retrieves a list of resources.
-*   **POST /api/resource**: Creates a new resource.
-
-## Contributing
-
-Contributions are welcome! If you'd like to contribute, please follow these steps:
-
-1.  Fork the repository.
-2.  Create a new branch (`git checkout -b feature/your-feature-name`).
-3.  Make your changes.
-4.  Commit your changes (`git commit -m 'Add some feature'`).
-5.  Push to the branch (`git push origin feature/your-feature-name`).
-6.  Open a Pull Request.
-
-## License
-
-(Specify the license for your project, e.g., MIT License. If you don't have one, you can choose one from [choosealicense.com](https://choosealicense.com/)).
+MIT
 
 ---
 
-*This README was generated with assistance from Cascade AI.*
