@@ -139,6 +139,49 @@ export function ProductServiceCreation({
   onProductCreated
 }: ProductServiceCreationProps) {
   // Catégories et types de produits (déclarées en haut, une seule fois)
+
+  // --- Helpers avancés placés juste après les hooks d'état ---
+  // Récupérer les produits de l'utilisateur connecté via Supabase
+  const fetchUserProducts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      // 1. Récupérer l'utilisateur connecté
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error('Utilisateur non authentifié');
+      // 2. Récupérer la startup liée à l'utilisateur
+      const { data: startupData, error: startupError } = await supabase
+        .from('startups')
+        .select('id')
+        .eq('created_by', user.id)
+        .maybeSingle();
+      if (startupError) {
+        console.error('Erreur Supabase startups:', startupError);
+        setError('Erreur lors de la récupération de la startup : ' + (startupError.message || 'inconnue'));
+        toast.error('Erreur lors de la récupération de la startup : ' + (startupError.message || 'inconnue'));
+        setIsLoading(false);
+        return;
+      }
+      if (!startupData) {
+        setError('Aucune startup trouvée pour cet utilisateur.');
+        toast.error('Aucune startup trouvée pour cet utilisateur.');
+        setIsLoading(false);
+        return;
+      }
+      // 3. Récupérer les produits liés à cette startup
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('startup_id', startupData.id);
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Erreur lors du chargement des produits');
+      toast.error(error instanceof Error ? error.message : 'Erreur lors du chargement des produits');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const CATEGORIES = [
     { name: "SaaS Tools", icon: CodeIcon, description: "Software as a Service applications" },
     { name: "Web Development", icon: GlobeIcon, description: "Website and web application development" },
@@ -186,8 +229,20 @@ export function ProductServiceCreation({
         .from('startups')
         .select('id')
         .eq('created_by', user.id)
-        .single();
-      if (startupError || !startupData) throw new Error('Aucune startup trouvée pour cet utilisateur');
+        .maybeSingle();
+      if (startupError) {
+        console.error('Erreur Supabase startups:', startupError);
+        setError('Erreur lors de la récupération de la startup : ' + (startupError.message || 'inconnue'));
+        toast.error('Erreur lors de la récupération de la startup : ' + (startupError.message || 'inconnue'));
+        setIsLoading(false);
+        return;
+      }
+      if (!startupData) {
+        setError('Aucune startup trouvée pour cet utilisateur.');
+        toast.error('Aucune startup trouvée pour cet utilisateur.');
+        setIsLoading(false);
+        return;
+      }
       const startup_id = startupData.id;
       if (!newProduct.name || !newProduct.price) {
         toast.error('Veuillez remplir tous les champs obligatoires');
@@ -409,37 +464,48 @@ export function ProductServiceCreation({
       )}
       {/* Product grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map(product => (
-          <Card key={product.id} className="overflow-hidden">
-            <div className="relative h-48 w-full">
-              <ImageWithFallback
-                src={product.image_url || "/default-product.png"}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-              {product.badge && (
-                <Badge className="absolute top-2 right-2 bg-primary text-white">
-                  {product.badge}
-                </Badge>
-              )}
-            </div>
-            <CardHeader>
-              <CardTitle>{product.name}</CardTitle>
-              <CardDescription>{product.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xl font-bold">
-                {product.price ? `${product.price} €` : ''}
-                {product.rating && (
-                  <span className="ml-2 text-sm text-yellow-500">★ {product.rating}</span>
+        {products.length === 0 ? (
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="mx-auto mb-4 opacity-40"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div className="text-lg font-medium mb-2">Aucun produit ou service n’a encore été créé pour votre startup.</div>
+            <div className="text-sm mb-4">Cliquez sur “Ajouter un produit” pour commencer à enrichir votre catalogue !</div>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleOpenDialog}>
+              <PlusIcon className="h-4 w-4 mr-2" /> Ajouter un produit
+            </Button>
+          </div>
+        ) : (
+          products.map(product => (
+            <Card key={product.id} className="overflow-hidden">
+              <div className="relative h-48 w-full">
+                <ImageWithFallback
+                  src={product.image_url || "/default-product.png"}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+                {product.badge && (
+                  <Badge className="absolute top-2 right-2 bg-primary text-white">
+                    {product.badge}
+                  </Badge>
                 )}
-              </p>
-              {product.category && (
-                <span className="text-xs text-muted-foreground">Catégorie : {product.category}</span>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              </div>
+              <CardHeader>
+                <CardTitle>{product.name}</CardTitle>
+                <CardDescription>{product.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-bold">
+                  {product.price ? `${product.price} €` : ''}
+                  {product.rating && (
+                    <span className="ml-2 text-sm text-yellow-500">★ {product.rating}</span>
+                  )}
+                </p>
+                {product.category && (
+                  <span className="text-xs text-muted-foreground">Catégorie : {product.category}</span>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
       {/* Product Creation Dialog */}
       <Dialog
@@ -456,10 +522,64 @@ export function ProductServiceCreation({
           onInteractOutside={isLoading ? (e) => e.preventDefault() : undefined}
           onEscapeKeyDown={isLoading ? (e) => e.preventDefault() : undefined}
         >
-          {/* ...le reste du JSX du Dialog (inchangé)... */}
-          {/* Step indicator, steps, etc. */}
-          {/* ... */}
-          {/* Step 4: Images */}
+          <DialogTitle>Créer un produit ou service</DialogTitle>
+          {/* Étape 1 : Formulaire principal d'ajout */}
+          {currentStep === 1 && (
+            <form className="space-y-6" onSubmit={e => { e.preventDefault(); handleNextStep(); }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Nom du produit ou service *</Label>
+                  <Input id="name" name="name" value={newProduct.name} onChange={handleInputChange} required autoFocus />
+                </div>
+                <div>
+                  <Label htmlFor="type">Type *</Label>
+                  <Select value={newProduct.type} onValueChange={val => handleTypeSelect(val as ProductType)}>
+                    <SelectTrigger id="type">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="product">Produit</SelectItem>
+                      <SelectItem value="service">Service</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea id="description" name="description" value={newProduct.description} onChange={handleInputChange} required rows={3} />
+                </div>
+                <div>
+                  <Label htmlFor="price">Prix (€) *</Label>
+                  <Input id="price" name="price" type="number" min="0" step="0.01" value={newProduct.price} onChange={handleInputChange} required />
+                </div>
+                <div>
+                  <Label htmlFor="categoryId">Catégorie *</Label>
+                  <Select value={newProduct.categoryId} onValueChange={handleCategoryChange}>
+                    <SelectTrigger id="categoryId">
+                      <SelectValue placeholder="Choisir une catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="image">Image</Label>
+                  <Input id="image" name="image" type="file" accept="image/*" onChange={handleFileSelect} />
+                  {newProduct.imagePreview && (
+                    <img src={newProduct.imagePreview} alt="Aperçu" className="mt-2 rounded w-24 h-24 object-cover border" />
+                  )}
+                </div>
+              </div>
+              <DialogFooter className="flex justify-end">
+                <Button type="submit" disabled={isLoading}>
+                  Suivant
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+          {/* Étape 4 : Validation finale (bouton créer) */}
           {currentStep === 4 && (
             <>
               <ScrollArea className="max-h-[60vh] pr-4">
@@ -468,13 +588,13 @@ export function ProductServiceCreation({
               <DialogFooter className="flex justify-between sm:justify-between">
                 <Button variant="outline" onClick={handlePrevStep}>
                   <ArrowLeftIcon className="mr-2 h-4 w-4" />
-                  Previous
+                  Précédent
                 </Button>
                 <Button onClick={handleCreateProduct} disabled={isLoading}>
                   {isLoading ? (
                     <span className="flex items-center"><svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Création...</span>
                   ) : (
-                    'Create Product'
+                    'Créer le produit ou service'
                   )}
                 </Button>
               </DialogFooter>
@@ -506,26 +626,7 @@ export function ProductServiceCreation({
   // (remplace toute logique de décodage JWT custom)
   // Voir fetchUserProducts et handleCreateProduct pour usage
 
-  // Récupérer les produits de l'utilisateur connecté via Supabase
-  const fetchUserProducts = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error('Utilisateur non authentifié');
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('created_by', user.id);
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Erreur lors du chargement des produits');
-      toast.error('Erreur lors du chargement des produits');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   // Fetch products on mount
   React.useEffect(() => {

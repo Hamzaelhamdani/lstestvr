@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../../services/supabaseClient";
 import { 
   Search, 
   Filter, 
@@ -53,145 +54,8 @@ interface Order {
   }[];
 }
 
-// Mock data for orders
-const mockOrders: Order[] = [
-  { 
-    id: 'ORD-1234', 
-    customer: { 
-      name: 'Jane Cooper', 
-      email: 'jane.cooper@example.com',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop'
-    }, 
-    product: 'Website Audit', 
-    date: '2025-05-25T14:30:00Z', 
-    status: 'delivered', 
-    amount: 250,
-    paymentMethod: 'Credit Card',
-    address: '123 Main St, San Francisco, CA 94105',
-    trackingId: 'TRK-7890',
-    notes: 'Customer requested expedited delivery',
-    history: [
-      { status: 'pending', date: '2025-05-25T10:30:00Z' },
-      { status: 'processing', date: '2025-05-25T11:45:00Z', note: 'Payment confirmed' },
-      { status: 'shipped', date: '2025-05-25T13:15:00Z', note: 'Sent digital delivery' },
-      { status: 'delivered', date: '2025-05-25T14:30:00Z', note: 'Client confirmed receipt' }
-    ]
-  },
-  { 
-    id: 'ORD-1235', 
-    customer: { 
-      name: 'Wade Warren', 
-      email: 'wade.warren@example.com',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop'
-    }, 
-    product: 'AI Integration', 
-    date: '2025-05-26T09:15:00Z', 
-    status: 'processing', 
-    amount: 1250,
-    paymentMethod: 'Bank Transfer',
-    address: '456 Market St, San Francisco, CA 94105',
-    notes: 'Client requested detailed documentation',
-    history: [
-      { status: 'pending', date: '2025-05-26T08:00:00Z' },
-      { status: 'processing', date: '2025-05-26T09:15:00Z', note: 'Started integration' }
-    ]
-  },
-  { 
-    id: 'ORD-1236', 
-    customer: { 
-      name: 'Esther Howard', 
-      email: 'esther.howard@example.com',
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1961&auto=format&fit=crop'
-    }, 
-    product: 'UI Component Library', 
-    date: '2025-05-26T11:45:00Z', 
-    status: 'pending', 
-    amount: 350,
-    paymentMethod: 'PayPal',
-    address: '789 Market St, San Francisco, CA 94103',
-    history: [
-      { status: 'pending', date: '2025-05-26T11:45:00Z', note: 'Awaiting payment confirmation' }
-    ]
-  },
-  { 
-    id: 'ORD-1237', 
-    customer: { 
-      name: 'Cameron Williamson', 
-      email: 'cameron.w@example.com',
-      avatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=1780&auto=format&fit=crop'
-    }, 
-    product: 'Website Audit', 
-    date: '2025-05-27T15:10:00Z', 
-    status: 'pending', 
-    amount: 250,
-    paymentMethod: 'Credit Card',
-    address: '1010 Pine St, San Francisco, CA 94109',
-    history: [
-      { status: 'pending', date: '2025-05-27T15:10:00Z' }
-    ]
-  },
-  { 
-    id: 'ORD-1238', 
-    customer: { 
-      name: 'Brooklyn Simmons', 
-      email: 'brooklyn.s@example.com',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1888&auto=format&fit=crop'
-    }, 
-    product: 'Marketing Strategy', 
-    date: '2025-05-24T10:30:00Z', 
-    status: 'shipped', 
-    amount: 850,
-    paymentMethod: 'Bank Transfer',
-    address: '2020 Market St, San Francisco, CA 94114',
-    trackingId: 'TRK-4567',
-    history: [
-      { status: 'pending', date: '2025-05-24T08:15:00Z' },
-      { status: 'processing', date: '2025-05-24T09:20:00Z', note: 'Payment confirmed' },
-      { status: 'shipped', date: '2025-05-24T10:30:00Z', note: 'Initial draft sent' }
-    ]
-  },
-  { 
-    id: 'ORD-1239', 
-    customer: { 
-      name: 'Leslie Alexander', 
-      email: 'leslie.a@example.com',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1770&auto=format&fit=crop'
-    }, 
-    product: 'Custom API Integration', 
-    date: '2025-05-23T14:20:00Z', 
-    status: 'cancelled', 
-    amount: 1100,
-    paymentMethod: 'Credit Card',
-    address: '3030 Mission St, San Francisco, CA 94110',
-    notes: 'Client changed requirements after initial consultation',
-    history: [
-      { status: 'pending', date: '2025-05-23T09:10:00Z' },
-      { status: 'processing', date: '2025-05-23T10:30:00Z', note: 'Started project setup' },
-      { status: 'cancelled', date: '2025-05-23T14:20:00Z', note: 'Client requested cancellation' }
-    ]
-  },
-  { 
-    id: 'ORD-1240', 
-    customer: { 
-      name: 'Robert Fox', 
-      email: 'robert.fox@example.com',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1887&auto=format&fit=crop'
-    }, 
-    product: 'Website Redesign', 
-    date: '2025-05-22T16:40:00Z', 
-    status: 'refunded', 
-    amount: 1500,
-    paymentMethod: 'PayPal',
-    address: '4040 Jackson St, San Francisco, CA 94118',
-    notes: 'Client dissatisfied with initial design direction',
-    history: [
-      { status: 'pending', date: '2025-05-20T13:15:00Z' },
-      { status: 'processing', date: '2025-05-20T15:30:00Z', note: 'Payment confirmed' },
-      { status: 'shipped', date: '2025-05-22T10:20:00Z', note: 'Initial designs delivered' },
-      { status: 'refunded', date: '2025-05-22T16:40:00Z', note: 'Full refund processed' }
-    ]
-  }
-];
+
+// Orders fetched from Supabase
 
 // Summary stats calculation
 const getOrderStats = (orders: Order[]) => {
@@ -288,7 +152,29 @@ export function OrdersManagement(props: OrdersManagementProps) {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   
   // Filter orders based on search and status
-  const filteredOrders = mockOrders.filter(order => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLoading(true);
+      setError(null);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*');
+      if (error) {
+        setError('Erreur lors du chargement des commandes');
+        setOrders([]);
+      } else {
+        setOrders(data || []);
+      }
+      setLoading(false);
+    };
+    fetchOrders();
+  }, []);
+
+  const filteredOrders = orders.filter(order => {
     const matchesSearch = 
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -304,7 +190,7 @@ export function OrdersManagement(props: OrdersManagementProps) {
   });
 
   // Order stats
-  const stats = getOrderStats(mockOrders);
+  const stats = getOrderStats(orders);
 
   const handleOrderRowClick = (orderId: string) => {
     if (expandedOrderId === orderId) {
@@ -360,7 +246,7 @@ export function OrdersManagement(props: OrdersManagementProps) {
           <CardContent>
             <div className="text-2xl font-bold">
               ${ stats.totalOrders > 0 
-                ? (mockOrders.reduce((sum, order) => sum + order.amount, 0) / stats.totalOrders).toFixed(0) 
+                ? (orders.reduce((sum, order) => sum + order.amount, 0) / stats.totalOrders).toFixed(0) 
                 : 0 }
             </div>
             <div className="text-xs text-muted-foreground mt-1">
@@ -700,7 +586,7 @@ export function OrdersManagement(props: OrdersManagementProps) {
         </CardContent>
         <CardFooter className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Showing {filteredOrders.length} of {mockOrders.length} orders
+            Showing {filteredOrders.length} of {orders.length} orders
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>
